@@ -1,0 +1,77 @@
+Now, using the modern AI GPT3 trained on billions of networks I have generated the code for convex hull problem in Assembly x86
+Let's see how well the compression algorithms behave on this kind of input:
+---------------------------------------------------------------------------------------------------------------------------------
+# Define the array of points
+.data
+points: .quad (1,2), (3,4), (5,6), (7,8), (9,10), (11,12)
+num_points = 6
+
+# Initialize the stack to hold the convex hull points
+.bss
+stack: .space 8*16
+stack_size = 0
+
+# Initialize the current point to the first point in the array
+movq points, %rax
+
+# Add the first point to the stack
+movq %rax, stack(,stack_size,8)
+incq stack_size
+
+# Loop through the rest of the points in the array
+movq $1, %rdx
+
+loop:
+    cmpq num_points, %rdx
+    jge done
+
+    # Get the current point
+    movq points(,%rdx,8), %rax
+
+    # Check if the current point is to the left of the line formed
+    # by the top two points on the stack
+    movq stack(,stack_size-2,8), %rcx
+    movq stack(,stack_size-1,8), %rdi
+
+    # Calculate the slope of the line
+    movsd (%rcx), %xmm0
+    movsd 8(%rcx), %xmm1
+    movsd (%rdi), %xmm2
+    movsd 8(%rdi), %xmm3
+    subsd %xmm2, %xmm0
+    divsd %xmm3, %xmm0
+
+    # Calculate the y-intercept of the line
+    movsd 8(%rdi), %xmm2
+    mulsd %xmm0, %xmm2
+    subsd %xmm2, %xmm1
+
+    # Calculate the y-coordinate of the current point
+    # using the equation of the line
+    movsd (%rax), %xmm2
+    movsd 8(%rax), %xmm3
+    mulsd %xmm0, %xmm2
+    addsd %xmm1, %xmm2
+
+    # Check if the y-coordinate of the current point is greater than
+    # the y-coordinate of the top point on the stack
+    ucomisd %xmm3, %xmm2
+    jb add_point
+
+    # Pop the top point from the stack
+    decq stack_size
+    jmp next
+
+add_point:
+    # Add the current point to the stack
+    movq %rax, stack(,stack_size,8)
+    incq stack_size
+
+next:
+    incq %rdx
+    jmp loop
+
+done:
+    # The convex hull points are stored in the stack
+
+This code defines an array of points and constructs the convex hull using the Graham's scan algorithm. It initializes the stack with the first point in the array and then loops through the rest of the points, checking if each point is to the left of the line formed by the top two points on the stack. If the point is to the left, it is added to the stack. If the point is to the right
